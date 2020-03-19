@@ -8,3 +8,7 @@ license = "MIT"
 repository = "https://github.com/jaynus/nukly"
 
 [dependencies]
+nukly-sys = { version = "0.1.0", path = "nukly-sys" }
+
+[workspace]
+members = ["nukly-sys", "bindings-generator"]

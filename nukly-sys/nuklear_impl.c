@@ -1,0 +1,8 @@
+#undef NK_INCLUDE_DEFAULT_ALLOCATOR
+#undef NK_INCLUDE_STANDARD_IO
+#undef NK_INCLUDE_STANDARD_VARARGS
+
+#define NK_ASSERT(expr)
+
+
+#include <nuklear.h>
