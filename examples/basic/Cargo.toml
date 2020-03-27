@@ -1,0 +1,24 @@
+[package]
+name = "nukly-example-basic"
+version = "0.1.0"
+authors = ["Walter Pearce <jaynus@gmail.com>"]
+edition = "2018"
+description = "Placeholder for things"
+license = "MIT"
+repository = "https://github.com/jaynus/nukly"
+
+[features]
+std = []
+alloc-counters = []
+default = ["alloc-counters", "std"]
+
+[dependencies]
+nukly = { version = "0.1.0", path = "../../" }
+glow = "0.4"
+
+[target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
+glutin = { version = "0.24.0" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web_sys = { version = "0.3", package = "web-sys", features=["console"] }
+wasm-bindgen = { version = "0.2" }

@@ -7,8 +7,15 @@ description = "Placeholder for things"
 license = "MIT"
 repository = "https://github.com/jaynus/nukly"
 
+[features]
+std = []
+alloc-counters = []
+default = ["alloc-counters", "std"]
+
 [dependencies]
+thiserror = { version = "1.0" }
 nukly-sys = { version = "0.1.0", path = "nukly-sys" }
 
 [workspace]
-members = ["nukly-sys", "bindings-generator"]
+members = ["nukly-sys", "bindings-generator", "examples/basic"]
+

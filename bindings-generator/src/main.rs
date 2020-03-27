@@ -9,6 +9,7 @@ fn generate() {
         .header("bindings-generator/wrapper.h")
         .clang_arg(format!("-I{}", Path::new(SRC_PATH).display()))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .derive_default(true)
         .generate()
         .expect("Unable to generate bindings");
 

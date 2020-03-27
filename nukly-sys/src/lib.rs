@@ -1,3 +1,7 @@
-fn main() {
-    println!("Hello, world!");
-}
+#![allow(
+    clippy::all,
+    non_snake_case,
+    non_camel_case_types,
+    non_upper_case_globals
+)]
+include!("../nuklear_bindings.rs");
