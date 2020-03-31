@@ -32,7 +32,7 @@ pub unsafe extern "C" fn __nukly_alloc_proxy(
             return std::ptr::null_mut();
         }
 
-        (&*this).alloc(size.into()).unwrap()
+        (&*this).alloc(size as u64).unwrap()
     })
     .unwrap_or_else(|e| {
         println!("nukly: Allocation failed '{:?}', {}", old, size);
@@ -91,7 +91,7 @@ pub mod global {
     }
 
     pub struct Allocator {
-        inner: RefCell<sys::nk_allocator>,
+        pub(crate) inner: RefCell<sys::nk_allocator>,
         #[cfg(feature = "alloc-counters")]
         counters: Counters,
     }

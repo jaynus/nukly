@@ -183,16 +183,19 @@ impl Into<sys::nk_font_atlas_format> for AtlasFormat {
 }
 
 pub struct ImageBuilder {
-    dimensions: (usize, usize),
-    raw: *const u8,
-    atlas: Atlas,
-    format: AtlasFormat,
+    pub dimensions: (usize, usize),
+    pub raw: *const u8,
+    pub atlas: Atlas,
+    pub format: AtlasFormat,
     allocator: Pin<Arc<dyn Allocator>>,
 }
 impl ImageBuilder {
     // TODO:  nk_draw_null_texture
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-    pub fn build(self, id: usize) -> Image {
+    pub fn build<F>(self, mut f: F) -> Image
+    where
+        F: FnMut((usize, usize), &[u8]) -> usize,
+    {
         let ImageBuilder {
             dimensions,
             raw,
@@ -201,7 +204,24 @@ impl ImageBuilder {
             allocator,
         } = self;
 
+        let id = {
+            let slice = unsafe {
+                std::slice::from_raw_parts(
+                    raw,
+                    match format {
+                        AtlasFormat::Alpha8 => 1,
+                        AtlasFormat::Rgba32 => 4,
+                    } * dimensions.0
+                        * dimensions.1,
+                )
+            };
+
+            (f)(dimensions, slice)
+        };
+
         let atlas_ptr = atlas.as_ptr();
+
+        let null = sys::nk_draw_null_texture::default();
 
         let mut image = Image {
             id,

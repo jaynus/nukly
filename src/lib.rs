@@ -28,6 +28,7 @@ pub enum Error {
 pub struct Nuklear {
     inner: RefCell<sys::nk_context>,
     allocator: Pin<Arc<dyn alloc::Allocator>>,
+    vertex_config: sys::nk_convert_config,
 }
 
 impl Nuklear {
@@ -37,11 +38,24 @@ impl Nuklear {
     ) -> Result<Self, Error> {
         let inner = RefCell::new(sys::nk_context::default());
 
+        let mut vertex_config = sys::nk_convert_config::default();
+        draw::Vertex::apply(&mut vertex_config);
+        //vertex_config.null = null texutre thing?
+        vertex_config.circle_segment_count = 22;
+        vertex_config.curve_segment_count = 22;
+        vertex_config.arc_segment_count = 22;
+        vertex_config.global_alpha = 1.0;
+        vertex_config.shape_AA = sys::nk_anti_aliasing_NK_ANTI_ALIASING_ON;
+
         unsafe {
             sys::nk_init(inner.as_ptr(), allocator.as_ptr(), font.handle());
         }
 
-        Ok(Self { inner, allocator })
+        Ok(Self {
+            vertex_config,
+            allocator,
+            inner,
+        })
     }
 }
 /*

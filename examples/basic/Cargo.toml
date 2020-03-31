@@ -14,7 +14,7 @@ default = ["alloc-counters", "std"]
 
 [dependencies]
 nukly = { version = "0.1.0", path = "../../" }
-glow = "0.4"
+glow = { git = "https://github.com/grovesNL/glow.git" }
 
 [target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
 glutin = { version = "0.24.0" }
