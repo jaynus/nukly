@@ -44,7 +44,6 @@ fn setup_nk_vertex_attrib<C: glow::HasContext>(gl: &C) {
             std::mem::size_of::<nukly::draw::Vertex>() as i32,
             0,
         );
-        gl_error(gl, "vertex_attrib_pointer_f32");
 
         gl.vertex_attrib_pointer_f32(
             1,
@@ -54,7 +53,6 @@ fn setup_nk_vertex_attrib<C: glow::HasContext>(gl: &C) {
             std::mem::size_of::<nukly::draw::Vertex>() as i32,
             (std::mem::size_of::<f32>() * 2) as i32,
         );
-        gl_error(gl, "vertex_attrib_pointer_f32");
 
         gl.vertex_attrib_pointer_f32(
             2,
@@ -64,14 +62,12 @@ fn setup_nk_vertex_attrib<C: glow::HasContext>(gl: &C) {
             std::mem::size_of::<nukly::draw::Vertex>() as i32,
             (std::mem::size_of::<f32>() * 4) as i32,
         );
-        gl_error(gl, "vertex_attrib_pointer_f32");
 
         gl.enable_vertex_attrib_array(0);
-        gl_error(gl, "enable_vertex_attrib_array");
+
         gl.enable_vertex_attrib_array(1);
-        gl_error(gl, "enable_vertex_attrib_array");
+
         gl.enable_vertex_attrib_array(2);
-        gl_error(gl, "enable_vertex_attrib_array");
     }
 }
 
@@ -87,25 +83,21 @@ fn setup_nk_vertex_buffers<C: glow::HasContext>(
             .create_vertex_array()
             .expect("Cannot create vertex array");
         gl.bind_vertex_array(Some(array));
-        gl_error(gl, "enable_vertex_attrib_array");
-        gl_error(gl, "enable_vertex_attrib_array");
 
         let vbo = gl.create_buffer().expect("Failed to create vbo");
         let veo = gl.create_buffer().expect("Failed to create veo");
 
         gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
-        gl_error(gl, "bind_buffer");
+
         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(veo));
-        gl_error(gl, "bind_buffer");
 
         gl.buffer_data_size(glow::ARRAY_BUFFER, MAX_VERTEX_MEMORY, glow::STREAM_DRAW);
-        gl_error(gl, "buffer_data_size");
+
         gl.buffer_data_size(
             glow::ELEMENT_ARRAY_BUFFER,
             MAX_ELEMENT_MEMORY,
             glow::STREAM_DRAW,
         );
-        gl_error(gl, "buffer_data_size");
 
         setup_nk_vertex_attrib(gl);
 

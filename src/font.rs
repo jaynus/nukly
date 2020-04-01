@@ -113,13 +113,7 @@ impl Atlas {
 
         unsafe {
             sys::nk_font_atlas_init(this.as_ptr(), this.allocator.as_ptr());
-            println!("nk_font_atlas_init: {:x?} {:?}", this.as_ptr(), &this.inner);
             sys::nk_font_atlas_begin(this.as_ptr());
-            println!(
-                "nk_font_atlas_begin: {:x?} {:?}",
-                this.as_ptr(),
-                &this.inner
-            );
         }
 
         this
@@ -131,12 +125,6 @@ impl Atlas {
 
         self.inner.borrow_mut().default_font = font_ptr;
         self.fonts.push(Font::new(font_ptr));
-
-        println!(
-            "nk_font_atlas_add_default: {:x?} {:?}",
-            self.as_ptr(),
-            &self.inner
-        );
 
         self
     }
@@ -151,7 +139,6 @@ impl Atlas {
                 format.into(),
             )
         };
-        println!("nk_font_atlas_bake: {:x?} {:?}", self.as_ptr(), self.inner);
 
         if raw.is_null() {
             return Err(AtlasBakeError::Unknown);
@@ -298,7 +285,6 @@ mod tests {
     #[test]
     #[ignore]
     fn attempt_bake_write() {
-        println!("\n");
         let allocator = crate::alloc::global::create();
 
         let image = Atlas::new(allocator.clone())
