@@ -17,5 +17,8 @@ bitflags = "1.2"
 thiserror = { version = "1.0" }
 nukly-sys = { version = "0.1.0", path = "nukly-sys" }
 
+[dev-dependencies]
+image = "0.23"
+
 [workspace]
 members = ["nukly-sys", "bindings-generator", "examples/basic"]

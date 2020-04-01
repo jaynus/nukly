@@ -1,4 +1,5 @@
 use crate::{sys, Error, Nuklear};
+use std::ffi::CString;
 
 const NK_VERTEX_LAYOUT_END: sys::nk_draw_vertex_layout_element =
     sys::nk_draw_vertex_layout_element {
@@ -109,9 +110,6 @@ impl Nuklear {
         Ok(())
     }
 }
-
-use nukly_sys::nk_allocator;
-use std::ffi::CString;
 
 impl Nuklear {
     pub fn begin<F, S>(

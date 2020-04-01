@@ -4,6 +4,14 @@ use nukly;
 #[cfg(all(target_arch = "wasm32"))]
 use wasm_bindgen::prelude::*;
 
+#[inline]
+fn gl_error<C: glow::HasContext>(gl: &C, str: &str) {
+    let err = unsafe { gl.get_error() };
+    if err > 0 {
+        println!("ERR: {:x} @ '{}'", err, str);
+    }
+}
+
 const MAX_VERTEX_MEMORY: i32 = 512 * 1024;
 const MAX_ELEMENT_MEMORY: i32 = 128 * 1024;
 
@@ -36,6 +44,8 @@ fn setup_nk_vertex_attrib<C: glow::HasContext>(gl: &C) {
             std::mem::size_of::<nukly::draw::Vertex>() as i32,
             0,
         );
+        gl_error(gl, "vertex_attrib_pointer_f32");
+
         gl.vertex_attrib_pointer_f32(
             1,
             2,
@@ -44,6 +54,8 @@ fn setup_nk_vertex_attrib<C: glow::HasContext>(gl: &C) {
             std::mem::size_of::<nukly::draw::Vertex>() as i32,
             (std::mem::size_of::<f32>() * 2) as i32,
         );
+        gl_error(gl, "vertex_attrib_pointer_f32");
+
         gl.vertex_attrib_pointer_f32(
             2,
             4,
@@ -52,10 +64,14 @@ fn setup_nk_vertex_attrib<C: glow::HasContext>(gl: &C) {
             std::mem::size_of::<nukly::draw::Vertex>() as i32,
             (std::mem::size_of::<f32>() * 4) as i32,
         );
+        gl_error(gl, "vertex_attrib_pointer_f32");
 
         gl.enable_vertex_attrib_array(0);
+        gl_error(gl, "enable_vertex_attrib_array");
         gl.enable_vertex_attrib_array(1);
+        gl_error(gl, "enable_vertex_attrib_array");
         gl.enable_vertex_attrib_array(2);
+        gl_error(gl, "enable_vertex_attrib_array");
     }
 }
 
@@ -71,18 +87,25 @@ fn setup_nk_vertex_buffers<C: glow::HasContext>(
             .create_vertex_array()
             .expect("Cannot create vertex array");
         gl.bind_vertex_array(Some(array));
+        gl_error(gl, "enable_vertex_attrib_array");
+        gl_error(gl, "enable_vertex_attrib_array");
 
         let vbo = gl.create_buffer().expect("Failed to create vbo");
         let veo = gl.create_buffer().expect("Failed to create veo");
+
         gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
+        gl_error(gl, "bind_buffer");
         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(veo));
+        gl_error(gl, "bind_buffer");
 
         gl.buffer_data_size(glow::ARRAY_BUFFER, MAX_VERTEX_MEMORY, glow::STREAM_DRAW);
+        gl_error(gl, "buffer_data_size");
         gl.buffer_data_size(
             glow::ELEMENT_ARRAY_BUFFER,
             MAX_ELEMENT_MEMORY,
             glow::STREAM_DRAW,
         );
+        gl_error(gl, "buffer_data_size");
 
         setup_nk_vertex_attrib(gl);
 
@@ -213,25 +236,25 @@ fn main() {
         );
 
         let atlas = nukly::font::Atlas::new(allocator.clone());
-        let image =
-            atlas
-                .bake(nukly::font::AtlasFormat::Rgba32)
-                .unwrap()
-                .build(|dimensions, data| {
-                    gl.tex_image_2d(
-                        glow::TEXTURE_2D,
-                        0,
-                        glow::RGBA as i32,
-                        dimensions.0 as i32,
-                        dimensions.1 as i32,
-                        0,
-                        glow::RGBA,
-                        glow::UNSIGNED_BYTE,
-                        Some(data),
-                    );
-                    println!("err = {:x}", gl.get_error());
-                    texture as usize
-                });
+        let image = atlas
+            .with_default()
+            .bake(nukly::font::AtlasFormat::Rgba32)
+            .unwrap()
+            .build(|dimensions, data| {
+                gl.tex_image_2d(
+                    glow::TEXTURE_2D,
+                    0,
+                    glow::RGBA as i32,
+                    dimensions.0 as i32,
+                    dimensions.1 as i32,
+                    0,
+                    glow::RGBA,
+                    glow::UNSIGNED_BYTE,
+                    Some(data),
+                );
+                texture as usize
+            });
+
         let mut nk_context = nukly::Nuklear::create(allocator, &image.atlas().fonts()[0]).unwrap();
 
         let texture_loc = gl.get_uniform_location(program, "Texture");
@@ -255,22 +278,32 @@ fn main() {
                         demo_window(&mut nk_context);
 
                         gl.clear_color(0.2, 0.2, 0.2, 1.0);
+                        gl_error(&gl, "clear_color");
                         gl.clear(glow::COLOR_BUFFER_BIT);
+                        gl_error(&gl, "clear");
 
-                        gl.enable(glow::TEXTURE_2D);
                         gl.enable(glow::BLEND);
+                        gl_error(&gl, "BLEND");
                         gl.blend_equation(glow::FUNC_ADD);
+                        gl_error(&gl, "FUNC_ADD");
                         gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
+                        gl_error(&gl, "SRC_ALPHA");
 
                         gl.disable(glow::CULL_FACE);
+                        gl_error(&gl, "CULL_FACE");
                         gl.disable(glow::DEPTH_TEST);
+                        gl_error(&gl, "DEPTH_TEST");
                         gl.enable(glow::SCISSOR_TEST);
+                        gl_error(&gl, "SCISSOR_TEST");
 
                         gl.active_texture(glow::TEXTURE0);
+                        gl_error(&gl, "active_texture");
 
                         gl.use_program(Some(program));
+                        gl_error(&gl, "use_program");
 
                         gl.uniform_1_i32(texture_loc.as_ref(), 0);
+                        gl_error(&gl, "uniform_1_i32");
                         //#[rustfmt::skip]
                         let ortho = [
                             0.001667, 0.000000, 0.000000, 0.000000, 0.000000, -0.002500, 0.000000,
@@ -278,11 +311,15 @@ fn main() {
                             0.000000, 1.000000,
                         ];
                         gl.uniform_matrix_4_f32_slice(proj_loc.as_ref(), false, &ortho);
+                        gl_error(&gl, "uniform_matrix_4_f32_slice");
+
                         gl.bind_vertex_array(Some(vertex_array));
+                        gl_error(&gl, "bind_vertex_array");
                         //https://github.com/Immediate-Mode-UI/Nuklear/blob/master/example/canvas.c
                         gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
+                        gl_error(&gl, "bind_buffer");
                         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(veo));
-
+                        gl_error(&gl, "bind_buffer");
                         let vertices = gl.map_buffer_range(
                             glow::ARRAY_BUFFER,
                             0,
@@ -316,25 +353,44 @@ fn main() {
                             let mut offset = 0;
                             nk_context
                                 .draw(prepare, |ctx, cmd| {
-                                    gl.bind_texture(glow::TEXTURE_2D, Some(cmd.texture.id as u32));
+                                    if cmd.texture.id > 0 {
+                                        gl.bind_texture(
+                                            glow::TEXTURE_2D,
+                                            Some(cmd.texture.id as u32),
+                                        );
+                                        gl_error(&gl, "bind_texture");
+                                    }
                                     gl.scissor(
                                         cmd.clip_rect.x as i32,
                                         (768.0 - (cmd.clip_rect.y + cmd.clip_rect.h)) as i32,
                                         cmd.clip_rect.w as i32,
                                         cmd.clip_rect.h as i32,
                                     );
+                                    gl_error(&gl, "scissor");
                                     gl.draw_elements(
                                         glow::TRIANGLES,
                                         cmd.elem_count as i32,
                                         glow::UNSIGNED_SHORT,
                                         offset * std::mem::size_of::<u16>() as i32,
                                     );
+                                    gl_error(&gl, "draw_elements");
+
                                     offset += cmd.elem_count as i32;
                                 })
                                 .unwrap();
                         }
 
+                        gl.bind_texture(glow::TEXTURE_2D, None);
+                        gl_error(&gl, "bind_texture 0");
+                        gl.bind_buffer(glow::ARRAY_BUFFER, None);
+                        gl_error(&gl, "ARRAY_BUFFER 0");
+                        gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
+                        gl_error(&gl, "ELEMENT_ARRAY_BUFFER 0");
+                        gl.bind_vertex_array(None);
+                        gl_error(&gl, "bind_vertex_array 0 ");
+
                         windowed_context.swap_buffers().unwrap();
+                        gl_error(&gl, "swap_buffers");
                     }
                     Event::WindowEvent { ref event, .. } => match event {
                         WindowEvent::Resized(physical_size) => {

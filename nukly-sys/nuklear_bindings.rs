@@ -141,7 +141,7 @@ pub type __off_t = ::std::os::raw::c_long;
 pub type __off64_t = ::std::os::raw::c_long;
 pub type __pid_t = ::std::os::raw::c_int;
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct __fsid_t {
     pub __val: [::std::os::raw::c_int; 2usize],
 }
@@ -243,7 +243,7 @@ pub const nk_false: _bindgen_ty_1 = 0;
 pub const nk_true: _bindgen_ty_1 = 1;
 pub type _bindgen_ty_1 = u32;
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_color {
     pub r: nk_byte,
     pub g: nk_byte,
@@ -304,7 +304,7 @@ fn bindgen_test_layout_nk_color() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_colorf {
     pub r: f32,
     pub g: f32,
@@ -365,7 +365,7 @@ fn bindgen_test_layout_nk_colorf() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_vec2 {
     pub x: f32,
     pub y: f32,
@@ -404,7 +404,7 @@ fn bindgen_test_layout_nk_vec2() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_vec2i {
     pub x: ::std::os::raw::c_short,
     pub y: ::std::os::raw::c_short,
@@ -443,7 +443,7 @@ fn bindgen_test_layout_nk_vec2i() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_rect {
     pub x: f32,
     pub y: f32,
@@ -504,7 +504,7 @@ fn bindgen_test_layout_nk_rect() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_recti {
     pub x: ::std::os::raw::c_short,
     pub y: ::std::os::raw::c_short,
@@ -732,7 +732,7 @@ impl Default for nk_cursor {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_scroll {
     pub x: nk_uint,
     pub y: nk_uint,
@@ -1624,7 +1624,7 @@ extern "C" {
     pub fn nk_tree_element_pop(arg1: *mut nk_context);
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_list_view {
     pub begin: ::std::os::raw::c_int,
     pub end: ::std::os::raw::c_int,
@@ -3444,7 +3444,7 @@ pub type nk_query_font_glyph_f = ::std::option::Option<
     ),
 >;
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_user_font_glyph {
     pub uv: [nk_vec2; 2usize],
     pub offset: nk_vec2,
@@ -3596,7 +3596,7 @@ pub const nk_font_coord_type_NK_COORD_UV: nk_font_coord_type = 0;
 pub const nk_font_coord_type_NK_COORD_PIXEL: nk_font_coord_type = 1;
 pub type nk_font_coord_type = u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_baked_font {
     pub height: f32,
     pub ascent: f32,
@@ -3684,7 +3684,7 @@ impl Default for nk_baked_font {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_font_config {
     pub next: *mut nk_font_config,
     pub ttf_blob: *mut ::std::os::raw::c_void,
@@ -3895,7 +3895,7 @@ impl Default for nk_font_config {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_font_glyph {
     pub codepoint: nk_rune,
     pub xadvance: f32,
@@ -4422,7 +4422,7 @@ extern "C" {
     pub fn nk_font_atlas_clear(arg1: *mut nk_font_atlas);
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_memory_status {
     pub memory: *mut ::std::os::raw::c_void,
     pub type_: ::std::os::raw::c_uint,
@@ -4517,7 +4517,7 @@ pub const nk_buffer_allocation_type_NK_BUFFER_BACK: nk_buffer_allocation_type = 
 pub const nk_buffer_allocation_type_NK_BUFFER_MAX: nk_buffer_allocation_type = 2;
 pub type nk_buffer_allocation_type = u32;
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_buffer_marker {
     pub active: ::std::os::raw::c_int,
     pub offset: nk_size,
@@ -4556,7 +4556,7 @@ fn bindgen_test_layout_nk_buffer_marker() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_memory {
     pub ptr: *mut ::std::os::raw::c_void,
     pub size: nk_size,
@@ -5038,7 +5038,7 @@ impl Default for nk_clipboard {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_text_undo_record {
     pub where_: ::std::os::raw::c_int,
     pub insert_length: ::std::os::raw::c_short,
@@ -5194,6 +5194,16 @@ fn bindgen_test_layout_nk_text_undo_state() {
 impl Default for nk_text_undo_state {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
+    }
+}
+impl ::std::cmp::PartialEq for nk_text_undo_state {
+    fn eq(&self, other: &nk_text_undo_state) -> bool {
+        &self.undo_rec[..] == &other.undo_rec[..]
+            && &self.undo_char[..] == &other.undo_char[..]
+            && self.undo_point == other.undo_point
+            && self.redo_point == other.redo_point
+            && self.undo_char_point == other.undo_char_point
+            && self.redo_char_point == other.redo_char_point
     }
 }
 pub const nk_text_edit_type_NK_TEXT_EDIT_SINGLE_LINE: nk_text_edit_type = 0;
@@ -7522,7 +7532,7 @@ extern "C" {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_mouse_button {
     pub down: ::std::os::raw::c_int,
     pub clicked: ::std::os::raw::c_uint,
@@ -7572,7 +7582,7 @@ fn bindgen_test_layout_nk_mouse_button() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_mouse {
     pub buttons: [nk_mouse_button; 4usize],
     pub pos: nk_vec2,
@@ -7677,7 +7687,7 @@ fn bindgen_test_layout_nk_mouse() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_key {
     pub down: ::std::os::raw::c_int,
     pub clicked: ::std::os::raw::c_uint,
@@ -7716,7 +7726,7 @@ fn bindgen_test_layout_nk_key() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_keyboard {
     pub keys: [nk_key; 30usize],
     pub text: [::std::os::raw::c_char; 16usize],
@@ -7766,7 +7776,7 @@ fn bindgen_test_layout_nk_keyboard() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_input {
     pub keyboard: nk_keyboard,
     pub mouse: nk_mouse,
@@ -7926,7 +7936,7 @@ pub const nk_draw_vertex_layout_format_NK_FORMAT_COLOR_END: nk_draw_vertex_layou
 pub const nk_draw_vertex_layout_format_NK_FORMAT_COUNT: nk_draw_vertex_layout_format = 19;
 pub type nk_draw_vertex_layout_format = u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_draw_vertex_layout_element {
     pub attribute: nk_draw_vertex_layout_attribute,
     pub format: nk_draw_vertex_layout_format,
@@ -8546,7 +8556,7 @@ impl Default for nk_style_item {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_style_text {
     pub color: nk_color,
     pub padding: nk_vec2,
@@ -11937,7 +11947,7 @@ pub const nk_panel_set_NK_PANEL_SET_POPUP: nk_panel_set = 244;
 pub const nk_panel_set_NK_PANEL_SET_SUB: nk_panel_set = 246;
 pub type nk_panel_set = u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_chart_slot {
     pub type_: nk_chart_type,
     pub color: nk_color,
@@ -12058,7 +12068,7 @@ impl Default for nk_chart_slot {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_chart {
     pub slot: ::std::os::raw::c_int,
     pub x: f32,
@@ -12157,7 +12167,7 @@ pub const nk_panel_row_layout_type_NK_LAYOUT_TEMPLATE: nk_panel_row_layout_type 
 pub const nk_panel_row_layout_type_NK_LAYOUT_COUNT: nk_panel_row_layout_type = 9;
 pub type nk_panel_row_layout_type = u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_row_layout {
     pub type_: nk_panel_row_layout_type,
     pub index: ::std::os::raw::c_int,
@@ -12322,7 +12332,7 @@ impl Default for nk_row_layout {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_popup_buffer {
     pub begin: nk_size,
     pub parent: nk_size,
@@ -12394,7 +12404,7 @@ fn bindgen_test_layout_nk_popup_buffer() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_menu_state {
     pub x: f32,
     pub y: f32,
@@ -12466,7 +12476,7 @@ fn bindgen_test_layout_nk_menu_state() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_panel {
     pub type_: nk_panel_type,
     pub flags: nk_flags,
@@ -12695,7 +12705,7 @@ pub const nk_window_flags_NK_WINDOW_MINIMIZED: nk_window_flags = 32768;
 pub const nk_window_flags_NK_WINDOW_REMOVE_ROM: nk_window_flags = 65536;
 pub type nk_window_flags = u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_popup_state {
     pub win: *mut nk_window,
     pub type_: nk_panel_type,
@@ -12827,7 +12837,7 @@ impl Default for nk_popup_state {
     }
 }
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct nk_edit_state {
     pub name: nk_hash,
     pub seq: ::std::os::raw::c_uint,
@@ -13107,6 +13117,21 @@ impl Default for nk_property_state {
         unsafe { ::std::mem::zeroed() }
     }
 }
+impl ::std::cmp::PartialEq for nk_property_state {
+    fn eq(&self, other: &nk_property_state) -> bool {
+        self.active == other.active
+            && self.prev == other.prev
+            && &self.buffer[..] == &other.buffer[..]
+            && self.length == other.length
+            && self.cursor == other.cursor
+            && self.select_start == other.select_start
+            && self.select_end == other.select_end
+            && self.name == other.name
+            && self.seq == other.seq
+            && self.old == other.old
+            && self.state == other.state
+    }
+}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct nk_window {
@@ -13383,7 +13408,7 @@ impl Default for nk_config_stack_style_item_element {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_float_element {
     pub address: *mut f32,
     pub old_value: f32,
@@ -13431,7 +13456,7 @@ impl Default for nk_config_stack_float_element {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_vec2_element {
     pub address: *mut nk_vec2,
     pub old_value: nk_vec2,
@@ -13479,7 +13504,7 @@ impl Default for nk_config_stack_vec2_element {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_flags_element {
     pub address: *mut nk_flags,
     pub old_value: nk_flags,
@@ -13527,7 +13552,7 @@ impl Default for nk_config_stack_flags_element {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_color_element {
     pub address: *mut nk_color,
     pub old_value: nk_color,
@@ -13575,7 +13600,7 @@ impl Default for nk_config_stack_color_element {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_user_font_element {
     pub address: *mut *const nk_user_font,
     pub old_value: *const nk_user_font,
@@ -13628,7 +13653,7 @@ impl Default for nk_config_stack_user_font_element {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_button_behavior_element {
     pub address: *mut nk_button_behavior,
     pub old_value: nk_button_behavior,
@@ -13730,7 +13755,7 @@ impl Default for nk_config_stack_style_item {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_float {
     pub head: ::std::os::raw::c_int,
     pub elements: [nk_config_stack_float_element; 32usize],
@@ -13774,7 +13799,7 @@ impl Default for nk_config_stack_float {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_vec2 {
     pub head: ::std::os::raw::c_int,
     pub elements: [nk_config_stack_vec2_element; 16usize],
@@ -13818,7 +13843,7 @@ impl Default for nk_config_stack_vec2 {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_flags {
     pub head: ::std::os::raw::c_int,
     pub elements: [nk_config_stack_flags_element; 32usize],
@@ -13862,7 +13887,7 @@ impl Default for nk_config_stack_flags {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_color {
     pub head: ::std::os::raw::c_int,
     pub elements: [nk_config_stack_color_element; 32usize],
@@ -13906,7 +13931,7 @@ impl Default for nk_config_stack_color {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_user_font {
     pub head: ::std::os::raw::c_int,
     pub elements: [nk_config_stack_user_font_element; 8usize],
@@ -13952,7 +13977,7 @@ impl Default for nk_config_stack_user_font {
     }
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct nk_config_stack_button_behavior {
     pub head: ::std::os::raw::c_int,
     pub elements: [nk_config_stack_button_behavior_element; 8usize],
@@ -14190,6 +14215,16 @@ fn bindgen_test_layout_nk_table() {
 impl Default for nk_table {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
+    }
+}
+impl ::std::cmp::PartialEq for nk_table {
+    fn eq(&self, other: &nk_table) -> bool {
+        self.seq == other.seq
+            && self.size == other.size
+            && &self.keys[..] == &other.keys[..]
+            && &self.values[..] == &other.values[..]
+            && self.next == other.next
+            && self.prev == other.prev
     }
 }
 #[repr(C)]
@@ -14731,7 +14766,4 @@ impl Default for nk_context {
     fn default() -> Self {
         unsafe { ::std::mem::zeroed() }
     }
-}
-extern "C" {
-    pub static mut fictional_handle: nk_handle;
 }

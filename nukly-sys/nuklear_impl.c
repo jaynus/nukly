@@ -1,4 +1,5 @@
-#define NULL 0
+/*#define NULL 0
+
 
 #include "src/math.h"
 
@@ -24,14 +25,13 @@
 typedef unsigned long long size_t;
 typedef int (*cmpfun)(const void *, const void *);
 
+extern void qsort(void *base, size_t nel, size_t width, cmpfun cmp);
+*/
+
 extern void *__nukly_alloc_proxy(void * const handle, void *ptr, int size);
 extern void *__nukly_free_proxy(void * const handle, void *ptr);
 
 #define STBTT_malloc(x, u) __nukly_alloc_proxy(u, 0, x)
 #define STBTT_free(x, u) __nukly_free_proxy(u, x)
 
-extern void qsort(void *base, size_t nel, size_t width, cmpfun cmp);
-
 #include <nuklear.h>
-
-

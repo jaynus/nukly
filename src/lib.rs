@@ -75,7 +75,11 @@ mod tests {
         let allocator = alloc::global::create();
 
         let atlas = font::Atlas::new(allocator.clone());
-        let image = atlas.bake(font::AtlasFormat::Rgba32).unwrap().build(1);
+        let image = atlas
+            .with_default()
+            .bake(font::AtlasFormat::Rgba32)
+            .unwrap()
+            .build(|_, _| 1);
         let context = Nuklear::create(allocator, &image.atlas().fonts()[0]).unwrap();
     }
 }

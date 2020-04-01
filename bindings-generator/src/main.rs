@@ -10,6 +10,8 @@ fn generate() {
         .clang_arg(format!("-I{}", Path::new(SRC_PATH).display()))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .derive_default(true)
+        .derive_partialeq(true)
+        .impl_partialeq(true)
         .generate()
         .expect("Unable to generate bindings");
 

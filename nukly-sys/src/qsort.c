@@ -1,225 +1,252 @@
-/* Copyright (C) 2011 by Valentin Ochs
+/*******************************************************************************
+*
+*  Author:  Remi Dufour - remi.dufour@gmail.com
+*  Date:    July 23rd, 2012
+*
+*  Name:        Quicksort
+*
+*  Description: This is a well-known sorting algorithm developed by C. A. R.
+*               Hoare. It is a comparison sort and in this implementation,
+*               is not a stable sort.
+*
+*  Note:        This is public-domain C implementation written from
+*               scratch.  Use it at your own risk.
+*
+*******************************************************************************/
+
+#include <limits.h>
+#include <stddef.h>
+
+/* Insertion sort threshold shift
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * This macro defines the threshold shift (power of 2) at which the insertion
+ * sort algorithm replaces the Quicksort.  A zero threshold shift disables the
+ * insertion sort completely.
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * The value is optimized for Linux and MacOS on the Intel x86 platform.
  */
+#ifndef INSERTION_SORT_THRESHOLD_SHIFT
+# ifdef __APPLE__ & __MACH__
+#  define INSERTION_SORT_THRESHOLD_SHIFT 0
+# else
+#  define INSERTION_SORT_THRESHOLD_SHIFT 2
+# endif
+#endif
 
-/* Minor changes by Rich Felker for integration in musl, 2011-04-27. */
+/* Macro SWAP
+ *
+ * Swaps the elements of two arrays.
+ *
+ * The length of the swap is determined by the value of "SIZE".  While both
+ * arrays can't overlap, the case in which both pointers are the same works.
+ */
+#define SWAP(A,B,SIZE)                               \
+    {                                                \
+        register char       *a_byte = A;             \
+        register char       *b_byte = B;             \
+        register const char *a_end = a_byte + SIZE;  \
+                                                     \
+        while (a_byte < a_end)                       \
+        {                                            \
+            register const char swap_byte = *b_byte; \
+            *b_byte++ = *a_byte;                     \
+            *a_byte++ = swap_byte;                   \
+        }                                            \
+    }
 
-/* Smoothsort, an adaptive variant of Heapsort.  Memory usage: O(1).
-   Run time: Worst case O(n log n), close to O(n) in the mostly-sorted case. */
+/* Macro SWAP_NEXT
+ *
+ * Swaps the elements of an array with its next value.
+ *
+ * The length of the swap is determined by the value of "SIZE".  This macro
+ * must be used at the beginning of a scope and "A" shouldn't be an expression.
+ */
+#define SWAP_NEXT(A,SIZE)                                 \
+    register char       *a_byte = A;                      \
+    register const char *a_end  = A + SIZE;               \
+                                                          \
+    while (a_byte < a_end)                                \
+    {                                                     \
+        register const char swap_byte = *(a_byte + SIZE); \
+        *(a_byte + SIZE) = *a_byte;                       \
+        *a_byte++ = swap_byte;                            \
+    }
 
-typedef unsigned long long size_t;
-
-static inline int a_ctz_l(unsigned long x)
+/* Function Quicksort
+ *
+ * This function performs a basic Quicksort.  This implementation is the
+ * in-place version of the algorithm and is done in he following way:
+ *
+ * 1. In the middle of the array, we determine a pivot that we temporarily swap
+ *    to the end.
+ * 2. From the beginning to the end of the array, we swap any elements smaller
+ *    than this pivot to the start, adjacent to other elements that were
+ *    already moved.
+ * 3. We swap the pivot next to these smaller elements.
+ * 4. For both sub-arrays on sides of the pivot, we repeat this process
+ *    recursively.
+ * 5. For a sub-array smaller than a certain threshold, the insertion sort
+ *    algorithm takes over.
+ *
+ * As an optimization, rather than performing a real recursion, we keep a
+ * global stack to track boundaries for each recursion level.
+ *
+ * To ensure that at most O(log2 N) space is used, we recurse into the smaller
+ * partition first.  The log2 of the highest unsigned value of an integer type
+ * is the number of bits needed to store that integer.
+ */
+void quicksort(void   *array,
+               size_t  length,
+               size_t  size,
+               int(*compare)(const void *, const void *))
 {
-    static const char debruijn32[32] = {
-            0, 1, 23, 2, 29, 24, 19, 3, 30, 27, 25, 11, 20, 8, 4, 13,
-            31, 22, 28, 18, 26, 10, 7, 12, 21, 17, 9, 6, 16, 5, 15, 14
-    };
-    return debruijn32[(x&-x)*0x076be629 >> 27];
-}
+    /* Recursive stacks for array boundaries (both inclusive) */
+    struct stackframe
+    {
+        void *left;
+        void *right;
+    } stack[CHAR_BIT * sizeof(void *)];
 
-#define ntz(x) a_ctz_l((x))
+    /* Recursion level */
+    struct stackframe *recursion = stack;
 
-typedef int (*cmpfun)(const void *, const void *);
+#if INSERTION_SORT_THRESHOLD_SHIFT != 0
+    /* Insertion sort threshold */
+    const int threshold = size << INSERTION_SORT_THRESHOLD_SHIFT;
+#endif
 
-static inline int pntz(size_t p[2]) {
-    int r = ntz(p[0] - 1);
-    if(r != 0 || (r = 8*sizeof(size_t) + ntz(p[1])) != 8*sizeof(size_t)) {
-        return r;
-    }
-    return 0;
-}
+    /* Assign the first recursion level of the sorting */
+    recursion->left = array;
+    recursion->right = (char *)array + size * (length - 1);
 
-static void cycle(size_t width, unsigned char* ar[], int n)
-{
-    unsigned char tmp[256];
-    size_t l;
-    int i;
+    do
+    {
+        /* Partition the array */
+        register char *index = recursion->left;
+        register char *right = recursion->right;
+        char          *left  = index;
 
-    if(n < 2) {
-        return;
-    }
+        /* Assigning store to the left */
+        register char *store = index;
 
-    ar[n] = tmp;
-    while(width) {
-        l = sizeof(tmp) < width ? sizeof(tmp) : width;
-        memcpy(ar[n], ar[0], l);
-        for(i = 0; i < n; i++) {
-            memcpy(ar[i], ar[i + 1], l);
-            ar[i] += l;
-        }
-        width -= l;
-    }
-}
+        /* Pop the stack */
+        --recursion;
 
-/* shl() and shr() need n > 0 */
-static inline void shl(size_t p[2], int n)
-{
-    if(n >= 8 * sizeof(size_t)) {
-        n -= 8 * sizeof(size_t);
-        p[1] = p[0];
-        p[0] = 0;
-    }
-    p[1] <<= n;
-    p[1] |= p[0] >> (sizeof(size_t) * 8 - n);
-    p[0] <<= n;
-}
+        /* Determine a pivot (in the middle) and move it to the end */
+        const size_t middle = (right - left) >> 1;
+        SWAP(left + middle - middle % size,right,size)
 
-static inline void shr(size_t p[2], int n)
-{
-    if(n >= 8 * sizeof(size_t)) {
-        n -= 8 * sizeof(size_t);
-        p[0] = p[1];
-        p[1] = 0;
-    }
-    p[0] >>= n;
-    p[0] |= p[1] << (sizeof(size_t) * 8 - n);
-    p[1] >>= n;
-}
+        /* From left to right */
+        while (index < right)
+        {
+            /* If item is smaller than pivot */
+            if (compare(right, index) > 0)
+            {
+                /* Swap item and store */
+                SWAP(index,store,size)
 
-static void sift(unsigned char *head, size_t width, cmpfun cmp, int pshift, size_t lp[])
-{
-    unsigned char *rt, *lf;
-    unsigned char *ar[14 * sizeof(size_t) + 1];
-    int i = 1;
-
-    ar[0] = head;
-    while(pshift > 1) {
-        rt = head - width;
-        lf = head - width - lp[pshift - 2];
-
-        if((*cmp)(ar[0], lf) >= 0 && (*cmp)(ar[0], rt) >= 0) {
-            break;
-        }
-        if((*cmp)(lf, rt) >= 0) {
-            ar[i++] = lf;
-            head = lf;
-            pshift -= 1;
-        } else {
-            ar[i++] = rt;
-            head = rt;
-            pshift -= 2;
-        }
-    }
-    cycle(width, ar, i);
-}
-
-static void trinkle(unsigned char *head, size_t width, cmpfun cmp, size_t pp[2], int pshift, int trusty, size_t lp[])
-{
-    unsigned char *stepson,
-            *rt, *lf;
-    size_t p[2];
-    unsigned char *ar[14 * sizeof(size_t) + 1];
-    int i = 1;
-    int trail;
-
-    p[0] = pp[0];
-    p[1] = pp[1];
-
-    ar[0] = head;
-    while(p[0] != 1 || p[1] != 0) {
-        stepson = head - lp[pshift];
-        if((*cmp)(stepson, ar[0]) <= 0) {
-            break;
-        }
-        if(!trusty && pshift > 1) {
-            rt = head - width;
-            lf = head - width - lp[pshift - 2];
-            if((*cmp)(rt, stepson) >= 0 || (*cmp)(lf, stepson) >= 0) {
-                break;
-            }
-        }
-
-        ar[i++] = stepson;
-        head = stepson;
-        trail = pntz(p);
-        shr(p, trail);
-        pshift += trail;
-        trusty = 0;
-    }
-    if(!trusty) {
-        cycle(width, ar, i);
-        sift(head, width, cmp, pshift, lp);
-    }
-}
-
-void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
-{
-    size_t lp[12*sizeof(size_t)];
-    size_t i, size = width * nel;
-    unsigned char *head, *high;
-    size_t p[2] = {1, 0};
-    int pshift = 1;
-    int trail;
-
-    if (!size) return;
-
-    head = base;
-    high = head + size - width;
-
-    /* Precompute Leonardo numbers, scaled by element width */
-    for(lp[0]=lp[1]=width, i=2; (lp[i]=lp[i-2]+lp[i-1]+width) < size; i++);
-
-    while(head < high) {
-        if((p[0] & 3) == 3) {
-            sift(head, width, cmp, pshift, lp);
-            shr(p, 2);
-            pshift += 2;
-        } else {
-            if(lp[pshift - 1] >= high - head) {
-                trinkle(head, width, cmp, p, pshift, 0, lp);
-            } else {
-                sift(head, width, cmp, pshift, lp);
+                /* We increment store */
+                store += size;
             }
 
-            if(pshift == 1) {
-                shl(p, 1);
-                pshift = 0;
-            } else {
-                shl(p, pshift - 1);
-                pshift = 1;
-            }
+            index += size;
         }
 
-        p[0] |= 1;
-        head += width;
+        /* Move the pivot to its final place */
+        SWAP(right,store,size)
+
+/* Performs a recursion to the left */
+#define RECURSE_LEFT                     \
+    if (left < store - size)             \
+    {                                    \
+        (++recursion)->left = left;      \
+        recursion->right = store - size; \
     }
 
-    trinkle(head, width, cmp, p, pshift, 0, lp);
+/* Performs a recursion to the right */
+#define RECURSE_RIGHT                       \
+    if (store + size < right)               \
+    {                                       \
+        (++recursion)->left = store + size; \
+        recursion->right = right;           \
+    }
 
-    while(pshift != 1 || p[0] != 1 || p[1] != 0) {
-        if(pshift <= 1) {
-            trail = pntz(p);
-            shr(p, trail);
-            pshift += trail;
-        } else {
-            shl(p, 2);
-            pshift -= 2;
-            p[0] ^= 7;
-            shr(p, 1);
-            trinkle(head - lp[pshift] - width, width, cmp, p, pshift + 1, 1, lp);
-            shl(p, 1);
-            p[0] |= 1;
-            trinkle(head - width, width, cmp, p, pshift, 1, lp);
+/* Insertion sort inner-loop */
+#define INSERTION_SORT_LOOP(LEFT)                                 \
+    {                                                             \
+        register char *trail = index - size;                      \
+        while (trail >= LEFT && compare(trail, trail + size) > 0) \
+        {                                                         \
+            SWAP_NEXT(trail,size)                                 \
+            trail -= size;                                        \
+        }                                                         \
+    }
+
+/* Performs insertion sort left of the pivot */
+#define INSERTION_SORT_LEFT                                \
+    for (index = left + size; index < store; index +=size) \
+        INSERTION_SORT_LOOP(left)
+
+/* Performs insertion sort right of the pivot */
+#define INSERTION_SORT_RIGHT                                        \
+    for (index = store + (size << 1); index <= right; index +=size) \
+        INSERTION_SORT_LOOP(store + size)
+
+/* Sorts to the left */
+#if INSERTION_SORT_THRESHOLD_SHIFT == 0
+# define SORT_LEFT RECURSE_LEFT
+#else
+# define SORT_LEFT                 \
+    if (store - left <= threshold) \
+    {                              \
+        INSERTION_SORT_LEFT        \
+    }                              \
+    else                           \
+    {                              \
+        RECURSE_LEFT               \
+    }
+#endif
+
+/* Sorts to the right */
+#if INSERTION_SORT_THRESHOLD_SHIFT == 0
+# define SORT_RIGHT RECURSE_RIGHT
+#else
+# define SORT_RIGHT                 \
+    if (right - store <= threshold) \
+    {                               \
+        INSERTION_SORT_RIGHT        \
+    }                               \
+    else                            \
+    {                               \
+        RECURSE_RIGHT               \
+    }
+#endif
+
+        /* Recurse into the smaller partition first */
+        if (store - left < right - store)
+        {
+            /* Left side is smaller */
+            SORT_RIGHT
+            SORT_LEFT
+
+            continue;
         }
-        head -= width;
+
+        /* Right side is smaller */
+        SORT_LEFT
+        SORT_RIGHT
+
+#undef RECURSE_LEFT
+#undef RECURSE_RIGHT
+#undef INSERTION_SORT_LOOP
+#undef INSERTION_SORT_LEFT
+#undef INSERTION_SORT_RIGHT
+#undef SORT_LEFT
+#undef SORT_RIGHT
     }
+    while (recursion >= stack);
 }
 
+#undef INSERTION_SORT_THRESHOLD_SHIFT
+#undef SWAP
+#undef SWAP_NEXT

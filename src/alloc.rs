@@ -131,6 +131,7 @@ pub mod global {
         fn clone_inner(&self) -> sys::nk_allocator {
             *self.inner.borrow()
         }
+
         unsafe fn alloc(&self, size: u64) -> Result<*mut ffi::c_void, super::Error> {
             let size_size = std::mem::size_of::<sys::nk_size>();
             let size = size + size_size as u64;

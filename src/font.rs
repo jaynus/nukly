@@ -111,17 +111,34 @@ impl Atlas {
             allocator,
         };
 
-        {
-            let inner = this.inner.get_mut();
-            inner.permanent = this.allocator.clone_inner();
-            inner.temporary = this.allocator.clone_inner();
+        unsafe {
+            sys::nk_font_atlas_init(this.as_ptr(), this.allocator.as_ptr());
+            println!("nk_font_atlas_init: {:x?} {:?}", this.as_ptr(), &this.inner);
+            sys::nk_font_atlas_begin(this.as_ptr());
+            println!(
+                "nk_font_atlas_begin: {:x?} {:?}",
+                this.as_ptr(),
+                &this.inner
+            );
         }
 
-        let font_ptr =
-            unsafe { sys::nk_font_atlas_add_default(this.as_ptr(), 13.0, std::ptr::null_mut()) };
-        this.fonts.push(Font::new(font_ptr));
-
         this
+    }
+
+    pub fn with_default(mut self) -> Self {
+        let font_ptr =
+            unsafe { sys::nk_font_atlas_add_default(self.as_ptr(), 13.0, std::ptr::null_mut()) };
+
+        self.inner.borrow_mut().default_font = font_ptr;
+        self.fonts.push(Font::new(font_ptr));
+
+        println!(
+            "nk_font_atlas_add_default: {:x?} {:?}",
+            self.as_ptr(),
+            &self.inner
+        );
+
+        self
     }
 
     pub fn bake(self, format: AtlasFormat) -> Result<ImageBuilder, AtlasBakeError> {
@@ -134,6 +151,7 @@ impl Atlas {
                 format.into(),
             )
         };
+        println!("nk_font_atlas_bake: {:x?} {:?}", self.as_ptr(), self.inner);
 
         if raw.is_null() {
             return Err(AtlasBakeError::Unknown);
@@ -204,81 +222,98 @@ impl ImageBuilder {
             allocator,
         } = self;
 
-        let id = {
+        let (id, data) = {
+            use std::iter::FromIterator;
             let slice = unsafe {
-                std::slice::from_raw_parts(
-                    raw,
-                    match format {
-                        AtlasFormat::Alpha8 => 1,
-                        AtlasFormat::Rgba32 => 4,
-                    } * dimensions.0
-                        * dimensions.1,
-                )
+                std::slice::from_raw_parts(raw, format.stride() * dimensions.0 * dimensions.1)
             };
 
-            (f)(dimensions, slice)
+            (
+                (f)(dimensions, slice),
+                Vec::from_iter(slice.iter().copied()),
+            )
         };
 
-        let atlas_ptr = atlas.as_ptr();
+        let mut null = sys::nk_draw_null_texture::default();
+        unsafe {
+            sys::nk_font_atlas_end(atlas.as_ptr(), sys::nk_handle_id(id as i32), &mut null as _)
+        }
 
-        let null = sys::nk_draw_null_texture::default();
-
-        let mut image = Image {
+        Image {
             id,
-            raw,
+            data,
             format,
             allocator,
             dimensions,
             atlas,
-            null: sys::nk_draw_null_texture::default(),
-        };
-
-        unsafe {
-            sys::nk_font_atlas_end(
-                atlas_ptr,
-                sys::nk_handle_id(id as i32),
-                &mut image.null as _,
-            )
+            null,
         }
-
-        image
     }
 }
 
 pub struct Image {
     id: usize,
     dimensions: (usize, usize),
-    raw: *const u8,
+    data: Vec<u8>,
     atlas: Atlas,
     format: AtlasFormat,
     allocator: Pin<Arc<dyn Allocator>>,
     null: sys::nk_draw_null_texture,
 }
 impl Image {
+    #[inline]
     pub fn dimensions(&self) -> (usize, usize) {
         self.dimensions
     }
+
+    #[inline]
     pub fn format(&self) -> AtlasFormat {
         self.format
     }
+
+    #[inline]
     pub fn atlas(&self) -> &Atlas {
         &self.atlas
     }
+
+    #[inline]
     pub fn as_slice(&self) -> &[u8] {
-        let size = self.dimensions.0 * self.dimensions.1 * self.format.stride();
-        unsafe { std::slice::from_raw_parts(self.raw, size) }
+        &self.data
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{Atlas, AtlasFormat};
+    use image;
 
     #[test]
     fn attempt_bake() {
         let allocator = crate::alloc::global::create();
 
         let atlas = Atlas::new(allocator.clone());
-        let image = atlas.bake(AtlasFormat::Rgba32).unwrap().build(1);
+        let image = atlas.bake(AtlasFormat::Rgba32).unwrap().build(|_, _| 1);
+    }
+
+    #[test]
+    #[ignore]
+    fn attempt_bake_write() {
+        println!("\n");
+        let allocator = crate::alloc::global::create();
+
+        let image = Atlas::new(allocator.clone())
+            .with_default()
+            .bake(AtlasFormat::Rgba32)
+            .unwrap()
+            .build(|_, _| 1);
+
+        image::save_buffer(
+            "TEST.png",
+            image.as_slice(),
+            512,
+            128,
+            image::ColorType::Rgba8,
+        )
+        .unwrap();
     }
 }

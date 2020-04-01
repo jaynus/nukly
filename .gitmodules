@@ -1,3 +1,9 @@
+# This is the newer repo, but its broken for baking?
+#[submodule "external/nuklear"]
+#	path = external/nuklear
+#	url = https://github.com/Immediate-Mode-UI/Nuklear.git
+#
 [submodule "external/nuklear"]
-	path = external/nuklear
-	url = https://github.com/Immediate-Mode-UI/Nuklear.git
+       path = external/nuklear
+       url = https://github.com/vurtun/nuklear.git
+
