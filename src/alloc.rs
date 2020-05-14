@@ -45,6 +45,10 @@ pub unsafe extern "C" fn __nukly_alloc_proxy(
 #[no_mangle]
 pub unsafe extern "C" fn __nukly_free_proxy(userdata: sys::nk_handle, old: *mut ffi::c_void) {
     std::panic::catch_unwind(|| {
+        if old.is_null() {
+            return;
+        }
+
         let this = userdata.ptr as *mut global::Allocator;
         if this.is_null() {
             return;
@@ -65,7 +69,7 @@ pub mod global {
     use nukly_sys as sys;
 
     use std::{
-        alloc::{AllocRef, Global, Layout},
+        alloc::{AllocInit, AllocRef, Global, Layout, MemoryBlock},
         cell::RefCell,
         convert::TryInto,
         ffi,
@@ -136,41 +140,37 @@ pub mod global {
             let size_size = std::mem::size_of::<sys::nk_size>();
             let size = size + size_size as u64;
 
-            let (memory, allocated_size) = Global
+            let MemoryBlock { ptr, size } = Global
                 .alloc(
                     Layout::from_size_align(
                         size.try_into().map_err(|_| super::Error::InvalidSize)?,
                         ALIGNMENT,
                     )
                     .map_err(|_| super::Error::InvalidSize)?,
+                    AllocInit::Zeroed,
                 )
                 .map_err(|_| super::Error::InvalidSize)?;
 
             #[allow(clippy::cast_ptr_alignment)]
             {
-                *(memory.as_ptr() as *mut sys::nk_size) = allocated_size
-                    .try_into()
-                    .map_err(|_| super::Error::InvalidSize)?;
+                *(ptr.as_ptr() as *mut sys::nk_size) =
+                    size.try_into().map_err(|_| super::Error::InvalidSize)?;
             }
 
             #[cfg(feature = "alloc-counters")]
             {
                 self.counters.alloc_count.fetch_add(1, Ordering::Relaxed);
                 self.counters.current_allocated_bytes.fetch_add(
-                    allocated_size
-                        .try_into()
-                        .map_err(|_| super::Error::InvalidSize)?,
+                    size.try_into().map_err(|_| super::Error::InvalidSize)?,
                     Ordering::Relaxed,
                 );
                 self.counters.total_allocated_bytes.fetch_add(
-                    allocated_size
-                        .try_into()
-                        .map_err(|_| super::Error::InvalidSize)?,
+                    size.try_into().map_err(|_| super::Error::InvalidSize)?,
                     Ordering::Relaxed,
                 );
             }
 
-            Ok(memory.as_ptr().add(size_size) as *mut ffi::c_void)
+            Ok(ptr.as_ptr().add(size_size) as *mut ffi::c_void)
         }
         unsafe fn dealloc(&self, ptr: *mut ffi::c_void) -> Result<(), super::Error> {
             if ptr.is_null() {

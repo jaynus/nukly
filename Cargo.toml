@@ -21,4 +21,4 @@ nukly-sys = { version = "0.1.0", path = "nukly-sys" }
 image = "0.23"
 
 [workspace]
-members = ["nukly-sys", "bindings-generator", "examples/basic"]
+members = ["winit-support", "nukly-sys", "bindings-generator", "examples/basic"]

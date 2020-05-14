@@ -99,7 +99,10 @@ impl Nuklear {
         while !draw_command.is_null() {
             let command = unsafe { &*draw_command };
 
-            (each_command)(self, command);
+            if command.elem_count > 0 {
+                (each_command)(self, command);
+            }
+
             draw_command = unsafe {
                 sys::nk__draw_next(draw_command, &mut commands as _, self.inner.as_ptr())
             };
@@ -154,6 +157,14 @@ impl Nuklear {
                 count as i32,
             )
         }
+    }
+
+    pub fn layout_row_dynamic(&self, height: f32, cols: usize) {
+        unsafe { sys::nk_layout_row_dynamic(self.inner.as_ptr(), height, cols as i32) }
+    }
+
+    pub fn layout_row_begin(&self, format: sys::nk_layout_format, height: f32, cols: usize) {
+        unsafe { sys::nk_layout_row_begin(self.inner.as_ptr(), format, height, cols as i32) }
     }
 }
 

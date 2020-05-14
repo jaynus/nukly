@@ -1,5 +1,6 @@
 use glow::*;
 use nukly;
+use nukly_winit_support::NuklyWindowEventHandler;
 
 #[cfg(all(target_arch = "wasm32"))]
 use wasm_bindgen::prelude::*;
@@ -175,7 +176,6 @@ fn main() {
                 out vec4 Out_Color;
                 void main(){
                     Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
-                    //Out_Color = vec4(1.0, 0.0, 0.0, 1.0);
                 }
                 "#,
         );
@@ -214,25 +214,25 @@ fn main() {
 
         let allocator = nukly::alloc::global::create();
 
-        let texture = gl.create_texture().unwrap();
-        gl.bind_texture(glow::TEXTURE_2D, Some(texture));
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MIN_FILTER,
-            glow::LINEAR as i32,
-        );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MAG_FILTER,
-            glow::LINEAR as i32,
-        );
-
         let atlas = nukly::font::Atlas::new(allocator.clone());
         let image = atlas
             .with_default()
             .bake(nukly::font::AtlasFormat::Rgba32)
             .unwrap()
             .build(|dimensions, data| {
+                let texture = gl.create_texture().unwrap();
+                gl.bind_texture(glow::TEXTURE_2D, Some(texture));
+                gl.tex_parameter_i32(
+                    glow::TEXTURE_2D,
+                    glow::TEXTURE_MIN_FILTER,
+                    glow::LINEAR as i32,
+                );
+                gl.tex_parameter_i32(
+                    glow::TEXTURE_2D,
+                    glow::TEXTURE_MAG_FILTER,
+                    glow::LINEAR as i32,
+                );
+
                 gl.tex_image_2d(
                     glow::TEXTURE_2D,
                     0,
@@ -248,6 +248,7 @@ fn main() {
             });
 
         let mut nk_context = nukly::Nuklear::create(allocator, &image.atlas().fonts()[0]).unwrap();
+        let mut event_handler = NuklyWindowEventHandler::default();
 
         let texture_loc = gl.get_uniform_location(program, "Texture");
         let proj_loc = gl.get_uniform_location(program, "ProjMtx");
@@ -259,6 +260,11 @@ fn main() {
 
             event_loop.run(move |event, _, control_flow| {
                 *control_flow = ControlFlow::Poll;
+
+                //let input = nk_context.begin_input();
+                event_handler.handle_event(&mut nk_context, &event);
+                //nk_context = input.end();
+
                 match event {
                     Event::LoopDestroyed => {
                         return;
@@ -267,35 +273,33 @@ fn main() {
                         windowed_context.window().request_redraw();
                     }
                     Event::RedrawRequested(_) => {
+                        nk_context.end_input();
                         demo_window(&mut nk_context);
 
+                        gl.viewport(0, 0, 1024, 768);
+
                         gl.clear_color(0.2, 0.2, 0.2, 1.0);
-                        gl_error(&gl, "clear_color");
+
                         gl.clear(glow::COLOR_BUFFER_BIT);
-                        gl_error(&gl, "clear");
 
                         gl.enable(glow::BLEND);
-                        gl_error(&gl, "BLEND");
+
                         gl.blend_equation(glow::FUNC_ADD);
-                        gl_error(&gl, "FUNC_ADD");
+
                         gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
-                        gl_error(&gl, "SRC_ALPHA");
 
                         gl.disable(glow::CULL_FACE);
-                        gl_error(&gl, "CULL_FACE");
+
                         gl.disable(glow::DEPTH_TEST);
-                        gl_error(&gl, "DEPTH_TEST");
+
                         gl.enable(glow::SCISSOR_TEST);
-                        gl_error(&gl, "SCISSOR_TEST");
 
                         gl.active_texture(glow::TEXTURE0);
-                        gl_error(&gl, "active_texture");
 
                         gl.use_program(Some(program));
-                        gl_error(&gl, "use_program");
 
                         gl.uniform_1_i32(texture_loc.as_ref(), 0);
-                        gl_error(&gl, "uniform_1_i32");
+
                         //#[rustfmt::skip]
                         let ortho = [
                             0.001667, 0.000000, 0.000000, 0.000000, 0.000000, -0.002500, 0.000000,
@@ -303,15 +307,14 @@ fn main() {
                             0.000000, 1.000000,
                         ];
                         gl.uniform_matrix_4_f32_slice(proj_loc.as_ref(), false, &ortho);
-                        gl_error(&gl, "uniform_matrix_4_f32_slice");
 
                         gl.bind_vertex_array(Some(vertex_array));
-                        gl_error(&gl, "bind_vertex_array");
+
                         //https://github.com/Immediate-Mode-UI/Nuklear/blob/master/example/canvas.c
                         gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
-                        gl_error(&gl, "bind_buffer");
+
                         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(veo));
-                        gl_error(&gl, "bind_buffer");
+
                         let vertices = gl.map_buffer_range(
                             glow::ARRAY_BUFFER,
                             0,
@@ -345,44 +348,35 @@ fn main() {
                             let mut offset = 0;
                             nk_context
                                 .draw(prepare, |ctx, cmd| {
-                                    if cmd.texture.id > 0 {
-                                        gl.bind_texture(
-                                            glow::TEXTURE_2D,
-                                            Some(cmd.texture.id as u32),
-                                        );
-                                        gl_error(&gl, "bind_texture");
-                                    }
+                                    gl.bind_texture(glow::TEXTURE_2D, Some(cmd.texture.id as u32));
+
                                     gl.scissor(
                                         cmd.clip_rect.x as i32,
                                         (768.0 - (cmd.clip_rect.y + cmd.clip_rect.h)) as i32,
                                         cmd.clip_rect.w as i32,
                                         cmd.clip_rect.h as i32,
                                     );
-                                    gl_error(&gl, "scissor");
+
                                     gl.draw_elements(
                                         glow::TRIANGLES,
                                         cmd.elem_count as i32,
                                         glow::UNSIGNED_SHORT,
                                         offset * std::mem::size_of::<u16>() as i32,
                                     );
-                                    gl_error(&gl, "draw_elements");
 
                                     offset += cmd.elem_count as i32;
                                 })
                                 .unwrap();
                         }
 
-                        gl.bind_texture(glow::TEXTURE_2D, None);
-                        gl_error(&gl, "bind_texture 0");
                         gl.bind_buffer(glow::ARRAY_BUFFER, None);
-                        gl_error(&gl, "ARRAY_BUFFER 0");
+
                         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
-                        gl_error(&gl, "ELEMENT_ARRAY_BUFFER 0");
+
                         gl.bind_vertex_array(None);
-                        gl_error(&gl, "bind_vertex_array 0 ");
 
                         windowed_context.swap_buffers().unwrap();
-                        gl_error(&gl, "swap_buffers");
+                        nk_context.begin_input();
                     }
                     Event::WindowEvent { ref event, .. } => match event {
                         WindowEvent::Resized(physical_size) => {

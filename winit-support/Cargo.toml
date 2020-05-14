@@ -1,0 +1,12 @@
+[package]
+name = "nukly-winit-support"
+version = "0.1.0"
+authors = ["Walter Pearce <jaynus@gmail.com>"]
+edition = "2018"
+description = "Placeholder for things"
+license = "MIT"
+repository = "https://github.com/jaynus/nukly"
+
+[dependencies]
+nukly = { path = ".." }
+winit = "0.22"

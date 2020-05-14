@@ -10,6 +10,7 @@
 pub mod alloc;
 pub mod draw;
 pub mod font;
+pub mod input;
 
 pub use nukly_sys as sys;
 
@@ -65,6 +66,11 @@ impl Drop for Nuklear {
         //unsafe { sys::nk_free(self.inner.as_ptr()) }
     }
 }*/
+
+pub struct NuklearScope<T> {
+    inner: Nuklear,
+    _marker: std::marker::PhantomData<T>,
+}
 
 #[cfg(test)]
 mod tests {
